@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>User Profile</title>
+    <style>
+        body { background: #181a20; color: #fff; font-family: Arial, sans-serif; }
+        .container { max-width: 700px; margin: 40px auto; background: #23272f; border-radius: 12px; padding: 32px; box-shadow: 0 4px 24px #0002; }
+        h1 { color: #6cf; }
+        .profile-pic { margin: 16px 0; }
+        .profile-pic img { max-width: 120px; border-radius: 50%; border: 2px solid #6cf; }
+        .info, .stats { margin: 24px 0; }
+        .label { color: #aaa; font-size: 13px; }
+        .value { font-size: 16px; margin-bottom: 12px; }
+        .stat-label { color: #aaa; font-size: 12px; }
+        .stat-value { font-size: 18px; font-weight: bold; margin-bottom: 8px; }
+        .stat-block { display: inline-block; min-width: 120px; margin-right: 32px; }
+        .edit-link { color: #6cf; text-decoration: none; margin-left: 16px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>User Profile</h1>
+        <div class="profile-pic">
+            {% if user.profile_pic %}
+                <img src="{{ user.profile_pic.url }}" alt="Profile Picture">
+            {% else %}
+                <img src="https://ui-avatars.com/api/?name={{ user.username }}" alt="Profile Picture">
+            {% endif %}
+            <a href="/profile/edit/" class="edit-link">Edit Picture</a>
+        </div>
+        <div class="info">
+            <div class="label">Username:</div>
+            <div class="value">{{ user.username }}</div>
+            <div class="label">Full Name:</div>
+            <div class="value">{{ user.full_name }}</div>
+            <div class="label">University:</div>
+            <div class="value">{{ user.university_name }}</div>
+            <div class="label">Email:</div>
+            <div class="value">{{ user.email }}</div>
+        </div>
+        <div class="stats">
+            <div class="stat-block">
+                <div class="stat-label">Level</div>
+                <div class="stat-value">--</div>
+            </div>
+            <div class="stat-block">
+                <div class="stat-label">GameCoin</div>
+                <div class="stat-value">--</div>
+            </div>
+            <div class="stat-block">
+                <div class="stat-label">Achievements</div>
+                <div class="stat-value">--</div>
+            </div>
+        </div>
+        <div class="info">
+            <div class="label">Gaming Interests:</div>
+            <div class="value">{{ user.gaming_interests }}</div>
+            <div class="label">Motivation:</div>
+            <div class="value">{{ user.motivation }}</div>
+        </div>
+        <div style="margin-top:32px; font-size:13px; color:#aaa;">&copy; Hunter Campus RPG</div>
+    </div>
+</body>
+</html>

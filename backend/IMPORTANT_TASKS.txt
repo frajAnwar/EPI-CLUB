@@ -1,0 +1,27 @@
+IMPORTANT: To keep event and tournament statuses up to date, you MUST keep Celery Beat running!
+
+- Celery Beat is scheduled to run the status update task every 5 minutes.
+- Command to start Celery Beat:
+
+celery -A campus_rpg beat -l info
+
+- Command to start Celery worker (in another terminal):
+
+celery -A campus_rpg worker -l info
+
+If Celery Beat is not running, event/tournament statuses will NOT update automatically.
+
+---
+
+TODO NEXT STEPS:
+- Add filtering, searching, and pagination to all list endpoints (teams, tournaments, events, shop, news, etc.)
+- Add permissions to restrict admin actions (e.g., archiving, deleting, approving)
+- Add endpoints for tournament/event history (archive)
+- Add endpoints for live bracket updates and match results
+- Add endpoints for team invitations, applications, and approvals
+- Add endpoints for shop filtering and purchase history
+- Add endpoints for calendar aggregation (events, tournaments, news by date)
+- Add notification endpoints for marking as read/unread and fetching history
+- Add admin endpoints for dashboard analytics
+- Add tests for all critical endpoints and business logic
+- Document all endpoints and business logic

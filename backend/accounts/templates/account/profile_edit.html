@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Profile Picture</title>
+    <style>
+        body { background: #181a20; color: #fff; font-family: Arial, sans-serif; }
+        .container { max-width: 400px; margin: 60px auto; background: #23272f; border-radius: 12px; padding: 32px; box-shadow: 0 4px 24px #0002; }
+        h2 { color: #6cf; }
+        label { display: block; margin-top: 16px; color: #aaa; }
+        input { width: 100%; padding: 10px; margin-top: 4px; border-radius: 6px; border: none; background: #181a20; color: #fff; }
+        button { margin-top: 24px; padding: 12px 32px; background: #6cf; color: #181a20; border: none; border-radius: 6px; font-weight: bold; font-size: 16px; cursor: pointer; }
+        .success { color: #7fff7f; margin-top: 12px; }
+        a { color: #6cf; text-decoration: none; }
+        .profile-pic { margin: 16px 0; }
+        .profile-pic img { max-width: 120px; border-radius: 50%; border: 2px solid #6cf; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Edit Profile Picture</h2>
+        {% if user.profile_pic %}
+        <div class="profile-pic">
+            <img src="{{ user.profile_pic.url }}" alt="Profile Picture">
+        </div>
+        {% endif %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="success">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Update</button>
+        </form>
+        <div style="margin-top:24px;"><a href="/dashboard/">&larr; Back to Dashboard</a></div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,383 @@
+# Dynamic Web-Based RPG Platform for University Gaming Club
+
+## System Architecture & Data Flow
+
+```mermaid
+graph TD
+    DB[PostgreSQL Database] --> PlayerData
+    DB --> ItemSystem
+    DB --> DungeonSystem
+    DB --> EconomySystem
+    DB --> QuestSystem
+    PlayerData --> Profile[Player Profiles]
+    PlayerData --> Inventory
+    PlayerData --> Progression
+    ItemSystem --> GlobalShop
+    ItemSystem --> LootTables
+    ItemSystem --> Crafting
+    DungeonSystem --> Tiers
+    DungeonSystem --> Rewards
+    DungeonSystem --> ActiveExpeditions
+    EconomySystem --> Currency
+    EconomySystem --> Marketplace
+    EconomySystem --> Trading
+    QuestSystem --> DailyQuests
+    QuestSystem --> Storylines
+    QuestSystem --> Achievements
+```
+
+### Subsystem Mapping & Status
+
+- **PlayerData**: User, Profile, Inventory, Progression
+  - User, Inventory, UserBadge, UserQuest, UserAchievement, ActivityLog (implemented)
+  - Progression (level, stats, etc.) (planned)
+- **ItemSystem**: Item, Inventory, ShopItem, Trade
+  - Item, Inventory, ShopItem, Trade (implemented)
+  - LootTables (planned for dungeons, boxes, bosses)
+  - Crafting (TODO: future system)
+- **DungeonSystem**: Dungeon, DungeonFloor, Boss, DropTable, DungeonRun, PlayerEnergy
+  - Dungeon, DungeonFloor, Boss, DropTable (models/admin: implemented)
+  - DungeonRun, PlayerEnergy, ActiveExpeditions (planned)
+  - Tiers, Rewards (partially implemented, more logic needed)
+- **EconomySystem**: UserCurrency, Currency, Transaction, Marketplace, Trading
+  - UserCurrency, Trade (implemented)
+  - Currency, Transaction, Marketplace (planned)
+- **QuestSystem**: Quest, UserQuest, Achievement, UserAchievement
+  - Quest, UserQuest, Achievement, UserAchievement (implemented)
+  - DailyQuests, Storylines (TODO: future system)
+- **Profile [Player Profiles]**: User model and profile fields (implemented)
+- **Inventory**: Inventory, InventoryTransaction (implemented)
+- **Progression**: User stats, level, achievements, quest progress (planned)
+- **GlobalShop**: ShopItem, admin shop logic (implemented)
+- **LootTables**: DropTable (planned)
+- **Crafting**: (TODO: future system)
+- **Tiers**: Dungeon difficulty/tiers (planned)
+- **Rewards**: Dungeon, quest, and event rewards (partially implemented)
+- **ActiveExpeditions**: DungeonRun or similar (planned)
+- **Currency**: UserCurrency, Currency (implemented/planned)
+- **Marketplace**: Trade, ShopItem, AuctionHouse (planned)
+- **Trading**: Trade (implemented)
+- **DailyQuests, Storylines, Achievements**: Quest, UserQuest, Achievement, UserAchievement (implemented/TODO)
+
+### TODOs & Future Systems
+- Implement Crafting system
+- Implement DungeonRun/ActiveExpeditions logic
+- Implement advanced DungeonSystem features (energy regen, win/loss, per-floor rewards)
+- Implement Marketplace/AuctionHouse
+- Implement Progression (level, stats, etc.)
+- Implement DailyQuests and Storylines in QuestSystem
+
+---
+
+## 1. Membership-First Architecture
+
+### Registration by Approval
+- Application Form: Prospective members fill out a detailed form (full name, university name, email, gaming interests, motivation, etc.).
+- Admin Review Queue: Submissions appear in an admin dashboard for vetting.
+- Approval Workflow: Only admins can approve/reject applications. On approval, the user receives an invite link or magic login.
+- Role Assignment: Onboarding assigns “Member” or “Player” roles, with possible “Officer” or “Admin” tiers.
+
+### Club-Exclusive Access
+- No self-registration: All access is gated by admin approval.
+- Invite-Only Events: Certain dungeons, tournaments, or features are only accessible to approved members.
+
+## 3. Social & Community Features
+
+### Club News & Announcements
+- Dynamic News Feed: Admins post updates, event announcements, and results.
+- Event Calendar: Upcoming tournaments, meetings, and dungeon runs.
+- Admins can post announcements, news, and event recaps with images and media.
+
+[2025-06-30 14:20] Game Table, Team/Tournament Linkage, and Team Size Enforcement: Game model is now a first-class, admin-manageable table with team_size (member limit). Team and Tournament both reference Game via ForeignKey. Team size is enforced per game; only teams for the same game as a tournament can apply, and only the team leader can do so.
+[2025-06-30 14:10] Team Table Fully Implemented and Linked to Tournaments: Team model now includes all relevant fields (name, tag, description, game, created_by, members, created_at). Team is fully registered in the Django admin for CRUD access. Tournament model now links to Team via ForeignKey. Teams are now a first-class entity in the system.
+[2025-06-30 14:00] Shop/Inventory Atomic Sync and Calendar/Tournament Separation Complete: Shop and inventory are now always in sync using atomic logic. Calendar system is cleanly separated from news/announcements, and tournaments are linked to calendar events. All modularized apps and migrations are working. Ready for advanced event/tournament logic and frontend integration.
+[2025-06-30 13:59] Modularization Complete: Achievements, Quests, News, Announcements, and Calendar Events are now in their own dedicated apps. All migrations applied and admin is functional.
+
+### Member Directory & Profiles
+- Rich Profiles: Show gaming stats, club achievements, favorite games, and social links.
+- Recognition Badges: Earned for club service, event wins, or community contributions.
+- Player profile and progression system will include: public leaderboards, achievement badges, customizable avatars, player bios, and social features such as friend lists, following, and activity feeds.
+- Each member has a personalized experience���content, inventory, quests, and features are unique and tailored to each user, similar to platforms like Instagram or Facebook.
+- Special badges, titles, and visual effects will be awarded to top contributors, event winners, and long-term members. These recognitions will be displayed on profiles, leaderboards, and in chat/notifications.
+
+### Forums & Chat
+- Discord will be the only platform used for communication and community engagement. No built-in forums or chat features will be included on the website itself.
+- The Discord server will be directly connected to the website and backend server, enabling features such as account linking, role synchronization, and automated notifications between the website and Discord.
+
+### Moderation Tools
+- Moderation tools will be provided for reporting inappropriate content, banning users, and reviewing activity logs.
+
+## 4. Admin Panel Enhancements
+
+### Membership Management
+- Application Review: Approve/reject with notes.
+- Member Status: Track attendance, contributions, and disciplinary actions.
+- Bulk Messaging: Email or notify all members or specific groups.
+
+### Event & Tournament Tools
+- Event Creation: Schedule, manage signups, and track participation.
+- Bracket Generator: For tournaments, with live updates and results.
+- Advanced features such as automated bracket generation, live match tracking, Discord integration, RSVP/attendance tracking, and event reminders/notifications are planned. These will be developed with AI assistance as needed.
+
+### Shop, Inventory, and Player Management
+- Full CRUD (Create, Read, Update, Delete) operations on shop, players, roles, and all entities.
+- Complete control over the global shop and box shop.
+- Roles management system will support custom admin tiers, a permissions system, and the ability for the head manager to create and define roles (not just use default ones).
+- Global shop and box shop will support scheduled item rotations, flash sales, time-limited/seasonal items, and allow admins to schedule these in advance. Automated announcements for new or expiring items will be included, with advanced options available for admins if needed.
+
+### Analytics & Club Health
+- Simple dashboards for tracking user engagement, event participation, currency flow, item popularity, and similar metrics. Easy to use and not overly complex.
+- Feedback Collection: Polls and surveys for club improvement.
+- Advanced logging and analytics.
+- AI-powered features: anomaly detection (cheating/suspicious trades), predictive analytics (event participation), and AI suggestions for balancing the game economy and item drops.
+
+### Quest & Achievement System
+- Both in-game and real-world/club quests and achievements (e.g., dungeon runs, leveling, item collection, attending events, organizing tournaments, recruiting members).
+- Admins have full control over creating, assigning, and managing all quests and achievements.
+
+### Notifications & Alerts
+- Notifications will be a combination of methods, with a primary focus on Discord DMs for personal notifications and Discord server messages for global notifications. Other methods (in-app, email) can be included as secondary options.
+
+### Dungeon Game System
+
+#### Dungeon System Vision (Finalized)
+- Admin-curated, multi-floor dungeons with themes, bosses, drop tables, and energy systems
+- Expedition/search mechanic with random dungeon discovery, level gating, and cooldowns
+- Floor-by-floor progression with win rate logic, rewards, and the option to continue or return to hub
+- Full admin control and customization (dungeons, floors, bosses, drop rates, messages, cooldowns)
+- Automated item drop system with category-based bonuses (e.g., snow dungeon = more snow items)
+- Player notifications for key events (dungeon found, floor completed, dungeon completed)
+- Logging and documentation of all changes/customizations
+
+**Key mechanics to implement:**
+1. Dungeon Search/Discovery: Player clicks “search” or “commence expedition,” waits, and a random dungeon appears (level-appropriate or not). If too high, only “Return to Hub” is available; if eligible, can start or skip.
+2. Cooldowns: Skipping or completing a dungeon triggers a cooldown (admin-configurable, per-player, per-dungeon).
+3. Expedition/Energy: Each expedition and floor uses energy. PlayerEnergy is decremented accordingly.
+4. Floor Progression: Each floor presents a boss, win rate is calculated (based on level, badges, etc.), and player chooses to continue or return to hub.
+5. Rewards: Winning a floor gives floor rewards; losing gives partial/low-rarity rewards; winning all floors gives all rewards + special item.
+6. Item Drop System: Drop rates and item categories are fully customizable; dungeon categories (e.g., snow) boost certain item drops. Items and dungeons have categories; drop rates are set per dungeon category and item category, and can be 0–100%.
+7. Notifications: Players receive notifications for dungeon found, floor completed, dungeon completed (without revealing win/loss).
+8. Admin Dashboard: Full CRUD for dungeons, floors, bosses, drop tables, energy, messages, cooldowns, and logs. Control over dungeon found rates, item/dungeon categories, and drop rates.
+
+- **Current Implementation:**
+  - [x] Dungeon models and basic admin registration (CRUD) implemented.
+  - [x] Dungeon, floor, boss, and drop table structure defined in models (see DATABASE_SCHEMA.txt).
+  - [ ] Multi-floor logic, expedition timers, win/loss logic, and advanced admin customization are **planned** (not yet implemented).
+  - [ ] UI for expedition start, progress, and results is **planned**.
+  - [ ] Full admin dashboard for dungeon customization is **planned**.
+  - [ ] All advanced features (energy regen, win/loss messages, per-floor rewards, etc.) are **TODO**.
+
+- **Next Steps:**
+  - Implement expedition/search logic (random dungeon, weighted by level, found rate, recent completions)
+  - Implement per-player, per-dungeon cooldowns
+  - Implement energy system and floor-by-floor progression
+  - Implement category-based drop system and admin controls
+  - Build advanced admin UI for dungeon customization and analytics
+  - Integrate dungeon system with frontend and user progression
+  - Add player notifications for all key events
+  - Document all changes in CODING_LOG.txt and update this plan as features are completed
+
+### Real-World Integration
+- Features will include QR code check-ins for events, digital ticketing using club currency, physical rewards redemption, tracking physical attendance, distributing physical prizes, and possible integration with campus facilities.
+
+### Authentication & Onboarding
+- User authentication and onboarding will require only email and Discord (no university email, no other social logins or university SSO).
+- All users must verify their email address via a confirmation link before account activation (mandatory email verification).
+- Multi-factor authentication (MFA) will be optional for all users, not required.
+
+### Data Export & Privacy
+- No user data download/export functionality will be provided.
+- Account deletion and any sensitive data actions will require admin approval.
+- All user data (profile, inventory, quest progress, etc.) will only be viewable within the website—no export functionality is needed.
+
+### Advanced UI/UX & Immersive Features
+- The platform will include advanced UI/UX features such as animated transitions, parallax backgrounds, sound effects, and interactive tutorials/onboarding for new users, as well as other immersive elements.
+
+### Backup & Recovery
+- Automated daily backups of the database and critical files will be performed.
+- Admin interface will allow restoring from backups and viewing backup history.
+
+### Plugins & Free Software
+- The project may use plugins or free/open-source software for any system or feature to increase flexibility and reduce development time/cost.
+
+### Hosting
+- Hosting will use a free Platform-as-a-Service (PaaS) provider (such as Render, Railway, or Heroku) for public access, with simple Git-based deployment and managed database. No prior cloud experience required. Static/media files will use built-in or free cloud storage. SSL will be provided via Let's Encrypt or platform integration. Suitable for medium traffic and easy for beginners.
+
+### Additional Clarifications
+- No mobile app for now, but may be considered in the future.
+- Integrate with any third-party tools that reduce development effort (e.g., Google Calendar if useful, and others as needed).
+- Legal/compliance requirements will be addressed during development.
+- Support/help and feedback will be handled via Discord.
+- English only for now.
+- Performance and uptime are important.
+- Only profile picture uploads for now (no general media uploads).
+- All coding and development must be integrated and related to the overall system, database, and other code components—ensuring consistency, maintainability, and proper interconnection across the project.
+
+## 5. Security & Privacy
+- University SSO Integration: Optionally, integrate with campus authentication for extra security.
+- Data Privacy: Only admins can see sensitive member info; members control what’s public on their profile.
+- Standard privacy, data retention, and security best practices will be implemented, including user data deletion upon request, audit logs for admin actions, and compliance with general university data policies.
+
+## 6. Thematic & Immersive Elements
+- Solo Leveling Inspiration: Members “level up” by participating in club activities, unlocking new privileges, dungeons, or cosmetic upgrades.
+- Dynamic Club World: The club’s “world” evolves based on member activity—new dungeons, events, or storylines unlock as the club grows.
+
+## 7. Example User Flow
+1. Prospective Member: Fills out application form.
+2. Admin: Reviews and approves application.
+3. Member: Receives invite, logs in, customizes profile.
+4. Member: Participates in club events, earns currency, levels up.
+5. Admin: Posts news, manages events, rewards top contributors.
+6. All: Engage in RPG gameplay, club activities, and social features.
+
+## 8. Technical Implementation
+
+### Core Architecture
+- Django backend with Django REST Framework
+- PostgreSQL with TimescaleDB for analytics
+- Redis for real-time data streaming
+- Celery for background tasks
+
+### Dynamic UI Components
+- React/Vue for dynamic dashboards, forms, and real-time features
+- Real-time data binding for instant updates
+
+### Security Framework
+- JWT authentication with refresh tokens
+- Field-level encryption for sensitive data
+- Action confirmation for destructive operations
+- Audit logs with immutable records
+
+### Database-Driven Game World (Mermaid Diagram)
+
+DB[PostgreSQL Database] --> PlayerData
+DB --> ItemSystem
+DB --> DungeonSystem
+DB --> EconomySystem
+DB --> QuestSystem
+PlayerData --> Profile[Player Profiles]
+PlayerData --> Inventory
+PlayerData --> Progression
+ItemSystem --> GlobalShop
+ItemSystem --> LootTables
+ItemSystem --> Crafting
+DungeonSystem --> Tiers
+DungeonSystem --> Rewards
+DungeonSystem --> ActiveExpeditions
+EconomySystem --> Currency
+EconomySystem --> Marketplace
+EconomySystem --> Trading
+QuestSystem --> DailyQuests
+QuestSystem --> Storylines
+QuestSystem --> Achievements
+
+### Admin Panel Specifications
+- Player Management System: Live dashboard, profile editing, behavior analysis
+- Item Ecosystem Control: Visual item editor, drop rate management, shop admin
+- Dungeon Architect Studio: Tier config, live monitor, environment designer
+- Economy Management Suite: Currency controller, market regulation, trading oversight
+- Game Balance Laboratory: XP tuner, loot balancer, stamina console
+
+### Player Experience Flow (Mermaid Journey)
+- Authentication: Email verification, OAuth2, MFA
+- Dynamic Dashboard: Stats, dungeons, items
+- Gameplay: Dungeons, inventory, marketplace
+- Progression: Quests, level up, acquire items
+
+### Development Roadmap
+- Weeks 1-2: Core systems (auth, profile, admin perms)
+- Weeks 3-4: Gameplay engine (dungeon, progression, inventory)
+- Weeks 5-6: Economy systems (shop, marketplace, currency)
+- Weeks 7-8: Admin suite (player mgmt, item designer, balance tools)
+- Week 9: Deployment & testing (Docker, load/security tests)
+- Ongoing: Backups, monitoring, hotfixes
+
+### Monetization Integration
+- Virtual currency payment gateway
+- Marketplace transaction fees
+- Cosmetic item store
+- Premium subscription tiers
+
+## 9. Adjustments & Notes
+- All registration is by admin approval only; no open signups.
+- Club currency is central to both in-game and real-world club activities.
+- Social and community features are as important as the RPG gameplay.
+- The platform is designed to be a living, evolving club hub, not just a game.
+more - Any future changes or additions should be appended to this file for reference by AI agents or developers.
+- The RPG/game and club/IRL aspects are separate but interconnected through the level system and profiles. Virtual life (game, inventory, trading, shop) and real life (events, tournaments) are both important, and virtual items/currency have real-world value (e.g., buying tickets, badges, or special items for events). Random drop systems can grant special items usable in both virtual and real club contexts.
+- The system will use two currencies: one for in-game items/activities and a more valuable one for club-related transactions. Both currencies can be converted, but with limited and controlled conversion rules.
+- There will be two separate role systems: one for the game (determined by XP, e.g., player level/rank) and one for the club (determined by head manager and specialized managers such as game manager, club manager, tournaments manager, etc.).
+- The visual/thematic style should be a mix of anime (like Solo Leveling) and modern design, with the main feel being like an in-game quest interface, and should also include a glitchy, digital effect for added dynamism.
+- The website must be fully responsive (optimized for both desktop and mobile devices) and support only dark and light mode themes.
+- Improve all user-facing messages (onboarding, application status, etc.) with immersive, themed UI/UX for a consistent and branded experience. (Planned)
+
+---
+
+## Team, Community, Notification, and Search System Plan (2025-06-30 02:58)
+- Team creation requires a currency price, no admin approval needed.
+- Team model will include a unique tag that appears on every member's username.
+- Team leader manages team (invite/remove, edit info).
+- Username and team name/tag can only be changed by purchasing special items ("Username Changer" and "Team Name Changer").
+- These items must be created in the items database (via Django admin or migration) and will be sold in the global shop.
+- Editing username or team name/tag will be restricted until the user owns and uses the corresponding item.
+- Community system (forums, posts, or Discord integration) planned for team/user interaction.
+- Notification system planned for team invites, tournament announcements, and community updates (in-app, email, or Discord).
+- Search system planned for teams, users, tournaments, and posts, showing team tags and relevant info.
+
+---
+
+## Tournament Application Approval & Notification System Plan (2025-06-30 12:16)
+- All tournament applications (solo/team) require admin approval (status: pending, approved, rejected).
+- Admin dashboard for reviewing, approving, or rejecting applications.
+- Notification system for all applications, approvals, rejections, team actions, and tournament activities (in-app, email, or Discord).
+- Activity log for all actions (applications, approvals, rejections, team changes, etc.).
+- Game model added for multi-game support; teams are per-game.
+- Badges replace tags, allowing users to display multiple achievements/affiliations.
+
+## Planned Feature: Admin Notification for New User Registration
+- When a new user registers (is_approved=False), all admins receive a notification (website + Discord) alerting them to pending registrations.
+- Notification includes a link to the admin dashboard for approval.
+
+## Planned Feature: Admin Notification for Trading, Event, and Tournament Application
+- When a new trade, event, or tournament application requires admin review, all admins receive a notification (website + Discord) alerting them to pending actions.
+- Notification includes a link to the relevant admin dashboard or review page for quick access.
+- Applies to: new trades needing approval, new event creation/approval, new tournament applications.
+
+---
+
+## Change Log
+
+- [2025-06-30 02:56] Database reset and inventory model refactor: Deleted db.sqlite3 and all old migrations for a clean start. Removed Inventory model from accounts/models.py and dropped the table. Updated admin and all references to match new schema. Updated DATABASE_SCHEMA.txt and PROJECT_PLAN.txt to reflect new inventory structure.
+
+- [2025-06-29 15:21] Instruction added: "WHEN EVER U CHANGED OR ADD SOMTHING IN THIS PROJECT PLZ NOTE IT INSIDE THERE EVEN THIS MESSAGE I WROTE NOW SO ITS ALWAYS SAVED IN TXT FILES". All future changes, additions, or instructions must be recorded in this section for persistent tracking.
+- [2025-06-29 15:21] Clarified primary goals: community building, competitive gaming, event management, rare item collection and trading, mini dungeon game with level system valued in the club, hosting tournaments, and announcement/calendar page. Plan will emphasize these as core features.
+- [2025-06-29 15:21] Clarified that RPG/game and club/IRL aspects should be separate but interconnected through the level system and profiles. Virtual items/currency should have real-world value (e.g., buying tickets, badges, or special items for events). Random drop systems can grant special items usable in both virtual and real club contexts.
+- [2025-06-29 15:21] Added dual currency system: one for in-game items/activities and a more valuable one for club-related transactions. Both currencies can be converted, but with limited and controlled conversion rules.
+- [2025-06-29 15:21] Added two separate role systems: one for the game (XP-based) and one for the club (manager-assigned, including specialized managers for different areas).
+- [2025-06-29 15:21] Specified visual/thematic style: a mix of anime (like Solo Leveling) and modern design, with the main feel being like an in-game quest interface.
+- [2025-06-29 15:21] Added: The visual/thematic style should also include a glitchy, digital effect for added dynamism.
+- [2025-06-29 15:21] Specified: The website must be fully responsive (optimized for both desktop and mobile devices) and support only dark and light mode themes.
+- [2025-06-29 15:21] Added: Standard privacy, data retention, and security best practices will be implemented, including user data deletion upon request, audit logs for admin actions, and compliance with general university data policies.
+- [2025-06-29 15:21] Added: Advanced event/tournament features (bracket generation, live tracking, Discord integration, RSVP, reminders) are planned and will be developed with AI assistance as needed.
+- [2025-06-29 15:21] Specified: Discord will be the only platform used for communication and community engagement. No built-in forums or chat features will be included on the website itself.
+- [2025-06-29 15:21] Added: The Discord server will be directly connected to the website and backend server, enabling features such as account linking, role synchronization, and automated notifications between the website and Discord.
+- [2025-06-29 15:21] Added: Trading and shop systems will support non-tradable items, cooldowns, transaction fees, admin approval for selected items, rarity-based pricing, limited editions, and dynamic pricing. Supporting systems include item metadata, trade engine, shop system, admin controls, and event hooks.
+- [2025-06-29 15:21] Added: All item acquisition is based on random drop chances, whether from leveling up, completing dungeons, or opening boxes.
+- [2025-06-29 15:21] Added: Admin panel will include full CRUD on shop, players, roles, and all entities; complete control over global and box shops; advanced logging and analytics; and AI-powered features for anomaly detection, predictive analytics, and game economy/item drop balancing.
+- [2025-06-29 15:21] Added: Player profile and progression system will include public leaderboards, achievement badges, customizable avatars, player bios, and social features such as friend lists, following, and activity feeds.
+- [2025-06-29 15:21] Added: Both in-game and real-world/club quests and achievements will be supported, with admins having full control over creating, assigning, and managing all quests and achievements.
+- [2025-06-29 15:21] Added: Notifications will be a combination of methods, with a primary focus on Discord DMs for personal notifications and Discord server messages for global notifications. Other methods (in-app, email) can be included as secondary options.
+- [2025-06-29 15:21] Added: Global shop and box shop will support scheduled item rotations, flash sales, time-limited/seasonal items, admin scheduling, automated announcements for new/expiring items, and advanced options for admins.
+- [2025-06-29 15:21] Added: Dungeon system will be admin-curated: admins can add, delete, or modify dungeons. Players discover dungeons randomly, with availability and difficulty depending on their level. The system is not fully procedural/random, but allows for random discovery and level-based access. (Detailed design to be developed later.)
+- [2025-06-29 15:21] Added: Real-world integration features will include QR code check-ins for events, digital ticketing using club currency, physical rewards redemption, tracking physical attendance, distributing physical prizes, and possible integration with campus facilities.
+- [2025-06-29 15:21] Added: User authentication and onboarding will require only email and Discord (no university email, no other social logins or university SSO).
+- [2025-06-29 15:21] Added: Multi-factor authentication (MFA) will be optional for all users, not required.
+- [2025-06-29 15:21] Added: No user data download/export functionality. Account deletion and sensitive data actions require admin approval. All user data is only viewable within the website (profile, inventory, quest progress, etc.).
+- [2025-06-29 15:21] Added: Each member has a personalized experience—content, inventory, quests, and features are unique and tailored to each user, similar to platforms like Instagram or Facebook.
+- [2025-06-29 15:21] Added: The platform will include advanced UI/UX features such as animated transitions, parallax backgrounds, sound effects, and interactive tutorials/onboarding for new users, as well as other immersive elements.
+- [2025-06-29 15:21] Added: Admins can post announcements, news, and event recaps with images and media, and have moderation tools for reporting inappropriate content, banning users, and reviewing activity logs.
+- [2025-06-29 15:21] Added: Simple analytics and reporting dashboards for tracking user engagement, event participation, currency flow, item popularity, and similar metrics. Easy to use and not overly complex.
+- [2025-06-29 15:21] Added: Automated daily backups of the database and critical files, with an admin interface to restore from backups and view backup history.
+- [2025-06-29 15:21] Added: Special badges, titles, and visual effects will be awarded to top contributors, event winners, and long-term members. These recognitions will be displayed on profiles, leaderboards, and in chat/notifications.
+- [2025-06-29 15:21] Added: The project may use plugins or free/open-source software for any system or feature to increase flexibility and reduce development time/cost.
+- [2025-06-29 15:21] Added: No mobile app for now, but may be considered in the future. Integrate with any third-party tools that reduce development effort (e.g., Google Calendar if useful, and others as needed). Legal/compliance requirements will be addressed during development. Support/help and feedback will be handled via Discord. English only for now. Performance and uptime are important. Only profile picture uploads for now (no general media uploads). All coding and development must be integrated and related to the overall system, database, and other code components—ensuring consistency, maintainability, and proper interconnection across the project.

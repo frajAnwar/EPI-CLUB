@@ -1,0 +1,74 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<h1>Economy Health & Suspicious Activity Dashboard</h1>
+
+<h2>Total Currency in Circulation</h2>
+<ul>
+  {% for c in currency_totals %}
+    <li>{{ c.currency }}: {{ c.total }}</li>
+  {% endfor %}
+</ul>
+
+<h2>Top Users by Currency Balance</h2>
+<ul>
+  {% for b in top_balances %}
+    <li>{{ b.user__email }} ({{ b.currency }}): {{ b.balance }}</li>
+  {% endfor %}
+</ul>
+
+<h2>Top Users by Inventory Quantity</h2>
+<ul>
+  {% for i in top_inventory %}
+    <li>{{ i.user__email }}: {{ i.total_items }}</li>
+  {% endfor %}
+</ul>
+
+<h2>Most Traded Items</h2>
+<ul>
+  {% for t in most_traded_items %}
+    <li>{{ t.item__name }}: {{ t.trades }} trades</li>
+  {% endfor %}
+</ul>
+
+<h2>Most Valuable Items (by total value)</h2>
+<ul>
+  {% for v in item_values %}
+    <li>{{ v.item__name }}: {{ v.total_value }}</li>
+  {% endfor %}
+</ul>
+
+<h2>Large Transactions (over threshold)</h2>
+<ul>
+  {% for tx in large_transactions %}
+    <li>{{ tx.user.email }}: {{ tx.amount }} {{ tx.currency }} ({{ tx.action }}, {{ tx.timestamp }})</li>
+  {% endfor %}
+</ul>
+
+<h2>Users with Rapid/Frequent Changes (last 24h)</h2>
+<ul>
+  {% for u in rapid_users %}
+    <li>{{ u.user__email }}: {{ u.tx_count }} transactions</li>
+  {% endfor %}
+</ul>
+
+<h2>Users with High Balances</h2>
+<ul>
+  {% for b in high_balances %}
+    <li>{{ b.user.email }} ({{ b.currency }}): {{ b.balance }}</li>
+  {% endfor %}
+</ul>
+
+<h2>Users with High Item Quantities</h2>
+<ul>
+  {% for i in high_items %}
+    <li>{{ i.user.email }}: {{ i.item.name }} x{{ i.quantity }}</li>
+  {% endfor %}
+</ul>
+
+<h2>Recent Admin Adjustments</h2>
+<ul>
+  {% for tx in recent_admin_adjustments %}
+    <li>{{ tx.user.email }}: {{ tx.item.name }} ({{ tx.quantity }}) at {{ tx.timestamp }} ({{ tx.metadata.reason }})</li>
+  {% endfor %}
+</ul>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>Pending Membership Applications</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Full Name</th>
+        <th>Email</th>
+        <th>University</th>
+        <th>Interests</th>
+        <th>Motivation</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+        <tr>
+          <td>{{ user.full_name }}</td>
+          <td>{{ user.email }}</td>
+          <td>{{ user.university_name }}</td>
+          <td>{{ user.gaming_interests }}</td>
+          <td>{{ user.motivation }}</td>
+          <td>
+            <a href="{% url 'approve_user' user.id %}">Approve</a>
+            <a href="{% url 'reject_user' user.id %}">Reject</a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

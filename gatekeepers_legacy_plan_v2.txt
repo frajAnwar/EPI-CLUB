@@ -1,0 +1,339 @@
+# The "Gatekeepers' Legacy" - Design Document v2.0
+
+## 1. Core Concepts
+
+### 1.1. System Overview
+*   **Concept:** A self-contained gameplay loop focused on procedurally generated gates, player progression (Ranks), and an in-game economy.
+
+### 1.2. The Hunter's Rank
+*   **Concept:** The primary progression metric, unlocking higher-difficulty gates and better rewards.
+
+### 1.3. GameCoin
+*   **Concept:** The primary soft currency earned from gates and quests, used for most gameplay-related purchases.
+
+---
+
+## 2. The Gate System
+
+### 2.1. Gate Generation & The World Map
+*   **Concept:** The World Map is the central hub for the player. It is divided into distinct **Zones**, each with a specific level range. Players unlock zones by reaching the required level, creating a tangible sense of progression as their map expands.
+*   **Daily Spawning:** Each day, the backend runs a process to populate the World Map. For every player, the system assigns one random Gate to each Zone that the player has unlocked. This ensures all unlocked territories have new, daily content.
+*   **Implementation - SVG World Map:**
+    *   **Technology:** The map will be implemented as a **Scalable Vector Graphic (SVG)** file, not a static image (e.g., PNG, JPG).
+    *   **Structure:** Each Zone on the map will be a distinct shape (`<path>`) within the SVG, assigned a unique ID (e.g., `id="sunken-city"`). This makes each zone a programmable object.
+    *   **Flexibility:** This vector-based approach is resolution-independent, ensuring the map looks crisp on all screen sizes. It also decouples the map's logic from static pixel coordinates, making it easy to update and modify.
+    *   **Dynamic Content:** Gate icons will be dynamically added to the map using JavaScript. The backend will provide the gate's zone location, and the frontend will append a new SVG element (e.g., `<circle>`) into the correct zone shape.
+    *   **Interactivity:** CSS can be used to style zones based on their state (e.g., hover effects, glowing for quests), providing a much richer user experience than a static image.
+
+### 2.1.1. Admin Zone & Gate Management
+*   **Concept:** To allow for dynamic world-building without code changes, an admin has direct control over the map's structure and the content within it.
+*   **Zone Management:** Admins can create or delete Zones on the World Map through an admin panel.
+*   **Gate Manifests:** For each Zone, an admin is responsible for curating a **"Gate Manifest"**—a list of specific, pre-designed gates that can potentially spawn in that Zone. This manifest acts as the loot table for what gates can appear there.
+*   **Daily Generation Logic:** The daily spawning process (see 2.1) will randomly select one gate from the relevant Zone's Gate Manifest to assign to the player for that day.
+
+### 2.2. Scouting
+*   **Concept:** Scouting is a multi-stage process where players spend `GameCoin` to reveal progressively more information about a gate before committing to an expedition. This adds a layer of strategic decision-making.
+*   **Stages:**
+    *   **Stage 1: Initial Intel (Low Cost - e.g., 50 GameCoin):**
+        *   Reveals the gate's **Name**.
+        *   Reveals the gate's **Level**.
+        *   Reveals the **Number of Floors**.
+    *   **Stage 2: Tactical Assessment (Medium Cost - e.g., 150 GameCoin):**
+        *   Reveals the **primary monster types** (e.g., "Undead," "Goblins").
+        *   Reveals the **primary loot category** (e.g., "Heavy Armor," "Alchemical Reagents").
+    *   **Stage 3: Full Reconnaissance (High Cost - e.g., 400 GameCoin):**
+        *   Reveals the **final boss** of the gate.
+        *   Reveals a list of potential **rare drops** from the boss.
+
+### 2.3. Expedition Flow & The Admin-Driven Tactical Approach System
+*   **Concept:** The expedition flow is designed to be highly replayable and easy to expand. This is achieved through a modular, admin-driven system for the choices players make between floors.
+*   **Floor Structure:**
+    *   Each floor is a self-contained challenge consisting of a series of **Encounters**.
+    *   The final encounter of every floor is a powerful **"Floor Guardian"**. Defeating this Guardian is required to complete the floor.
+*   **The Inter-Floor Sanctuary (Active Choice):**
+    *   After defeating a Floor Guardian, the expedition pauses. The player enters a safe "Sanctuary" where they must choose their **"Tactical Approach"** for the next floor.
+*   **Admin-Driven Choices:**
+    *   **Data-Driven Design:** Every "Tactical Approach" is a data object, likely stored in a database, which can be created and edited through an admin panel without requiring code changes.
+    *   **Category System for Variety:** To ensure choices are always distinct, each Approach is assigned a `category`. When presenting choices, the system will randomly pull one Approach from several different categories (e.g., one 'Brute Force', one 'Economic', one 'Stealth').
+    *   **Core Categories:** `Brute Force`, `Stealth & Speed`, `Economic`, `High-Risk`, `Strategic`.
+*   **The Admin's Toolbox: The Modifier System**
+    *   An admin can build any Approach by combining a list of `effects`. Each effect is a modifier with the following parameters:
+        *   `type`: The kind of change (`PLAYER_MODIFIER`, `ENCOUNTER_MODIFIER`, `LOOT_MODIFIER`, `RULE_MODIFIER`).
+        *   `stat`: The specific stat to change (e.g., `PlayerPower`, `EncounterPower`, `GameCoinReward`).
+        *   `operation`: How to change it (`ADD`, `MULTIPLY`).
+        *   `target`: What it applies to (e.g., `NEXT_ENCOUNTER_ONLY`, `ALL_ENCOUNTERS_ON_FLOOR`, `FLOOR_GUARDIAN_ONLY`).
+        *   `value`: The numeric value of the change.
+        *   `condition`: Special rules (`END_EXPEDITION_ON_FAILURE`).
+*   **Example Data Structure for a Tactical Approach:**
+    *   This is how an admin would construct "The Cursed Shrine" using the system.
+    ```json
+    {
+      "id": "cursed_shrine_042",
+      "name": "The Cursed Shrine",
+      "description": "Gain immense power for this floor, but failure means the end of your run.",
+      "category": "High-Risk",
+      "effects": [
+        {
+          "type": "PLAYER_MODIFIER",
+          "stat": "PlayerPower",
+          "operation": "ADD",
+          "target": "ALL_ENCOUNTERS_ON_FLOOR",
+          "value": 50
+        },
+        {
+          "type": "RULE_MODIFIER",
+          "condition": "END_EXPEDITION_ON_FAILURE",
+          "target": "ALL_ENCOUNTERS_ON_FLOOR"
+        }
+      ]
+    }
+    ```
+
+---
+
+
+## 3. Core Gameplay Mechanics
+
+### 3.1. The Power System
+*   **Concept:** All combat calculations are based on a single stat: **Power**. A character's Level is converted into Power, which is then augmented by gear.
+*   **Level-to-Power Conversion:** `1 Player Level = 7 Power`.
+
+### 3.2. PlayerPower
+*   **Formula:** `PlayerPower = (PlayerLevel * 7) + GearPowerBonus`
+*   **Details:**
+    *   `PlayerLevel`: The character's current base level.
+    *   `GearPowerBonus`: The sum of all `+Power` bonuses from equipped items. This is the primary way players augment their strength beyond leveling.
+
+### 3.3. The Equipment System
+*   **Concept:** A player's power is significantly augmented by the gear they equip. The equipment system is slot-based to be intuitive and enforce non-stackable gear choices.
+*   **Equipment Slots:** A player has a fixed number of equipment slots. Each slot can only hold one item of the corresponding type.
+    *   `Weapon`
+    *   `Chest`
+    *   `Legs`
+    *   `Hands`
+    *   `Feet`
+    *   `Amulet`
+    *   `Ring` (x2)
+*   **Functionality:** When a player equips an item, its `GearPowerBonus` is added to their total `PlayerPower`. Equipping a new item into an occupied slot replaces the old one, ensuring effects do not stack.
+
+### 3.4. Gate & Encounter Structure
+*   **Gate Rank:** A gate's Rank (e.g., "C-Rank") determines the types of monsters and challenges found within, but not a fixed difficulty.
+*   **Floors & Entities:** Gates are composed of multiple **Floors**. Each floor contains one or more **Encounters** (e.g., a fight, a trap). An encounter is made up of one or more **Entities** (e.g., monsters).
+*   **Entity Power:** Every entity has its own `EntityPower` stat, which is determined by its type and the gate's Rank.
+*   **Encounter Power:** The difficulty of a single encounter is the sum of the `EntityPower` of all entities involved.
+    *   **Formula:** `EncounterPower = SUM(EntityPower of all entities in the encounter)`
+
+### 3.5. Success Chance (Per Encounter)
+*   **Concept:** Success is not calculated for the entire gate, but for each individual encounter a player faces.
+*   **Formula:** `SuccessChance = 50 + (PlayerPower - EncounterPower)`
+*   **Details:**
+    *   The base success chance for an encounter is **50%** when `PlayerPower` and `EncounterPower` are equal.
+    *   Every point of Power difference between the player and the encounter adjusts the success chance by **1%**.
+
+### 3.6. Talent System
+*   **Purpose:** The Talent System allows players to specialize their characters beyond the raw stats of `PlayerPower`. Talents provide unique bonuses and abilities that modify the core gameplay loop, allowing for different playstyles.
+*   **Talent Points:** Players gain Talent Points at a set rate (e.g., 1 point per level) to spend in talent trees.
+*   **Proposed Talent Categories:**
+    *   **1. Expedition Efficiency:** Talents focused on speed, resource management, and interacting with gates more effectively (e.g., reducing timers or scouting costs).
+    *   **2. Combat Prowess:** Talents that directly influence the `SuccessChance` formula, such as adding bonuses against certain enemy types or providing advantages in specific situations (e.g., first encounter of the day).
+    *   **3. Loot & Economy:** Talents that increase rewards, improve the quality or quantity of drops, or provide economic advantages in the marketplace.
+*   **Example Talents:**
+    *   **Rapid Scouting (Efficiency):** Reduces the `GameCoin` cost of scouting gates by 10% per rank (Max 5 ranks).
+    *   **Ambusher (Prowess):** Adds `+15` to your `PlayerPower` for the first encounter of any gate.
+    *   **Resourceful (Economy):** Gives a 5% chance per rank to find double crafting materials from any successful encounter (Max 5 ranks).
+    
+    ---
+
+    ## 4. Rewards & Failure
+
+### 4.1. The Anima System (Failure Mechanic)
+*   **Concept:** To make expeditions less punishing and to give weight to high-risk choices, failure is managed by a resource pool representing a Hunter's soul-force.
+*   **Resource Pool:** Players start an expedition with a set amount of **Anima** (e.g., 3 points).
+*   **Standard Failure:** When a player fails a standard encounter:
+    *   They lose 1 point of **Anima**.
+    *   They receive no rewards for the failed encounter.
+    *   The expedition continues to the next encounter.
+*   **Expedition End:** If **Anima** is depleted, the expedition ends. The player is ejected from the gate but keeps a portion of all loot gathered so far (e.g., 50%) as a partial reward.
+*   **High-Risk Modifiers:** This system gives true meaning to `RULE_MODIFIER` effects like `END_EXPEDITION_ON_FAILURE`, which will now bypass the **Anima** system entirely for a much harsher penalty.
+
+### 4.2. Reward Structure
+*   **Concept:** Rewards are tiered to incentivize players at every stage of an expedition.
+*   **Encounter Rewards:** Every successful encounter has a chance to drop small amounts of `GameCoin` and common crafting materials.
+*   **Floor Guardian Rewards:** Defeating a Floor Guardian guarantees a larger `GameCoin` drop, a high chance for rare materials, and a small chance for a piece of gear.
+*   **Gate Completion Rewards:** Clearing the final Floor Guardian of a gate yields the best rewards:
+    *   A large sum of `GameCoin`.
+    *   A significant amount of Hunter XP.
+    *   A **Gate Chest** containing multiple pieces of gear, high-tier materials, and a chance for a unique Gate-specific item.
+
+    ---
+    
+    ## 5. The Economy & The Hunter's Workshop
+    
+    ### 5.1. Overview
+    *   **Concept:** To create a deep, player-driven economy and an addictive long-term gameplay loop, players can build and upgrade a personal **"Hunter's Workshop."** This system provides a passive income engine that is interdependent with the active gate-running loop.
+    
+    ### 5.2. The Production Chain Buildings
+    *   **Concept:** The Workshop is built around a production chain of three buildings, each unlocking at a different level and feeding into the next, creating a complex and evolving gameplay experience.
+    *   **Building 1: The Mana Well**
+    *   **Unlocks:** Level 8.
+    *   **Generates:** `Raw Mana Crystals` (used for enchanting, provisions, and refining).
+    *   **Upgrades Cost:** `GameCoin`.
+    *   **Building 2: The Aetherium Mine & Refinery**
+    *   **Unlocks:** Level 20.
+    *   **Generates:** `Unstable Aether Shards`.
+    *   **New Mechanic:** Players must use a **Refinery** building and spend `Raw Mana Crystals` to process the shards into valuable `Aetherium Ingots` (used for high-tier gear).
+    *   **Upgrades Cost:** `GameCoin` and `Raw Mana Crystals`.
+    *   **Building 3: The Soul Forge**
+    *   **Unlocks:** Level 40.
+    *   **Generates:** `Ethereal Essence` (used for endgame "Artifact" gear and Workshop upgrades).
+    *   **Upgrades Cost:** `GameCoin`, `Raw Mana Crystals`, and `Aetherium Ingots`.
+    
+    ### 5.3. The Addictive Loop: Capacity & Upgrades
+    *   **Limited Capacity:** Each building has a small resource capacity (e.g., 8 hours of production). Production HALTS when full, incentivizing players to log in regularly to collect resources.
+    *   **Strategic Upgrades:** Players can upgrade buildings to increase **Production Rate** and **Capacity**. This creates a core strategic choice: use materials now for gear, or reinvest them for better future production.
+    *   **Rank-Gated Tiers:** Upgrade levels are capped by Hunter Rank (e.g., must be C-Rank to upgrade past level 10), ensuring players must engage with the core gate-running loop.
+    
+    ### 5.4. Material Sink: Alchemical Infusion
+    *   **Concept:** A crafting station in the Workshop that acts as a "crafting lottery" and a sink for common materials.
+    *   **Mechanic:** Players can spend a quantity of `Raw Mana Crystals` or `Aetherium Ingots` to receive a random item from a weighted loot table.
+    *   **Potential Rewards:** Provisions, random gear, rare materials, large `GameCoin` sums, or even exclusive cosmetic "jackpot" items.
+    
+    ### 5.5. The Player-Driven Marketplace
+    *   **Tradable Materials:** The three core Workshop materials are fully tradable on the Marketplace for `GameCoin`.
+    *   **Emergent Player Roles:** This system naturally creates economic playstyles:
+    *   **The Industrialist:** Focuses on upgrading their Workshop to generate and sell a surplus of materials for profit.
+    *   **The Raider:** Focuses on running gates and uses their `GameCoin` earnings to buy materials from Industrialists to craft the gear they need.
+
+---
+
+## 6. Dynamic World Events: The "World Flux" System
+
+### 6.1. Concept
+*   **Goal:** To make the world feel alive and unpredictable, the **"World Flux"** system will periodically apply random, temporary **"Environmental Modifiers"** to Zones on the World Map.
+*   **Player Experience:** These events are publicly announced and visible on the map, creating daily new opportunities and threats that encourage players to adapt their strategies and log in to see what has changed.
+
+### 6.2. Admin-Driven Framework
+*   **Data-Driven Events:** Like the Tactical Approach system, all world events are data objects that can be created or modified by an admin without code changes.
+*   **The "Environmental Modifier" Data Structure:** An admin creates an event by defining its properties:
+    *   `id`: A unique identifier.
+    *   `name`: The player-facing name (e.g., "Mana Saturation").
+    *   `description`: A short, thematic description.
+    *   `duration`: How long the event lasts (e.g., 24 hours).
+    *   `zone_criteria`: Rules for which Zones can be affected (e.g., level range, "Forest" tag).
+    *   `effects`: A list of modifiers using the same powerful system as Tactical Approaches (`type`, `stat`, `operation`, `target`, `value`).
+
+### 6.3. Example World Flux Events
+*   **Event Type: Passive Zone Modifier**
+    *   **Name:** `Mana Saturation`
+    *   **Description:** "A surge of raw magic has saturated this zone, making gates more unstable but also more rewarding."
+    *   **Effects:** `LOOT_MODIFIER` (increase `Raw Mana Crystals` drop rate), `ENCOUNTER_MODIFIER` (slightly increase `EncounterPower`).
+*   **Event Type: High-Risk, High-Reward**
+    *   **Name:** `Gold Rush`
+    *   **Description:** "Unusual gold veins have been discovered! Monsters in this zone are hoarding the coins, but the unstable energy makes expeditions perilous."
+    *   **Effects:** `LOOT_MODIFIER` (greatly increase `GameCoinReward`), `RULE_MODIFIER` (set starting `Anima` to 1 for all expeditions in the zone).
+*   **Event Type: Community-Wide Threat**
+    *   **Name:** `Roaming World Boss`
+    *   **Concept:** A powerful boss entity appears over a Zone, locking high-rank gates. A special, server-wide quest is initiated to defeat the boss by contributing to a community progress bar via a unique gate. Success yields massive rewards for all participants.
+
+---
+
+## 7. Endgame Loop: The Monarch's Legacy
+
+### 7.1. Concept
+*   **Goal:** To provide a long-term, aspirational goal for top-tier players, the endgame loop revolves around forging a legendary **`Black Key`** to unlock an ultimate challenge and earn a reward that transcends gear.
+
+### 7.2. Step 1: Acquiring `Unstable Gate Fragments`
+*   **Mechanic:** Players must collect a large quantity of a new, account-bound, ultra-rare material: `Unstable Gate Fragments`.
+*   **Sources:**
+    *   **World Flux Gates:** Guaranteed drop from the final Floor Guardian of a high-rank gate (A-Rank+) currently affected by a World Flux event.
+    *   **World Bosses:** A significant number awarded from the community reward for defeating a Roaming World Boss.
+    *   **Red Gates:** A rare drop from the final boss of a Red Gate.
+
+### 7.3. Step 2: Red Gates - The Ultimate Gamble
+*   **Concept:** A rare, high-risk, high-reward gate type for S-Rank players.
+*   **Mechanics:**
+    *   **High Entry Cost:** Requires a large amount of `Ethereal Essence`.
+    *   **Perma-Failure:** The `Anima` system is disabled; a single failure ends the run with total loot loss.
+    *   **Extreme Difficulty:** Significantly harder than standard gates.
+*   **Reward:** The most direct, though most dangerous, way to acquire top-tier loot and `Unstable Gate Fragments`.
+
+### 7.4. Step 3: Forging the Black Key
+*   **Mechanic:** After collecting enough fragments (e.g., 100), a player can perform a one-time craft at their **Soul Forge** to create the `Black Key`.
+
+### 7.5. Step 4 & 5: The Monarch's Sanctum & The Ultimate Reward
+*   **The Final Gate:** The `Black Key` is consumed to unlock the **Monarch's Sanctum**, a permanent, solo-only, static super-challenge gate.
+*   **The `Echo of the Monarch`:** The first-time completion reward is a permanent, account-wide **Prestige Skill**—a powerful ability with a long cooldown (e.g., once per day).
+*   **Eternal Recognition:** The player also earns a unique cosmetic character aura and is immortalized in the server-wide "Hall of Monarchs."
+
+---
+
+## 8. The Quest System
+
+### 8.1. Concept: The Intelligent Quest System
+*   **Goal:** The quest system will be deeply aware of the player's state and actions to ensure every quest feels relevant, timely, and like a natural part of the player's journey, rather than a static checklist.
+
+### 8.2. The Prerequisite System (Smart Offerings)
+*   **Concept:** Every quest has a block of `prerequisites`. A quest only becomes available if the player meets ALL conditions, ensuring they are never offered irrelevant tasks.
+*   **Admin-Defined Prerequisites:** `min_level`, `max_level`, `unlocked_zone`, `completed_quest`, `active_world_event`, `workshop_building_level`, `association_standing`.
+*   **Functionality:** The Quest Board at the Hunter's Association will dynamically filter its list based on the player's real-time state.
+
+### 8.3. The Dynamic Trigger System (A Reactive World)
+*   **Concept:** The game will actively "listen" for player actions and can start quests automatically, making the player feel like they have *discovered* a quest.
+*   **Key Trigger Events:**
+    *   `on_zone_enter`: Starts a quest upon entering a new zone for the first time.
+    *   `on_item_looted`: A unique item can act as a quest starter the moment it's picked up.
+    *   `on_item_crafted`: Crafting a milestone item can trigger a new goal.
+    *   `on_enemy_defeated`: Defeating a key boss can trigger a challenge or follow-up quest.
+
+### 8.4. Quest Categories & Rewards
+*   **Categories:** `Main Story`, `Hunter Contracts (Side Quests)`, `Daily/Weekly Bounties`, and `World Flux Quests`.
+*   **Objective Types:** The system will support a wide variety of tasks, including `Kill`, `Gather`, `Craft`, `Scout`, `Explore`, and conditional `Clear` objectives.
+*   **Rewards:** Quests are a primary source of `Hunter XP`, `GameCoin`, Gear, Workshop Materials, and `Reputation`.
+
+---
+
+
+## 9. The Leveling & Rank System
+
+### 9.1. Concept
+*   **Two-Tiered Progression:** Player progression is driven by two interconnected systems. Players gain **Hunter XP** to increase their **Level** for raw power, and they complete **Rank-Up Trials** at level milestones to increase their **Hunter Rank** for access to new tiers of content.
+
+### 9.2. Hunter Experience (XP) & The Leveling Curve
+*   **Primary Sources:** XP is primarily gained from **Quest Completion** and **Gate Completion**. Small performance bonuses can also be awarded.
+*   **Leveling Curve:** The XP required to level up increases with each level, based on a scaling formula (e.g., `XP_to_next_level = 1000 * (current_level ^ 1.5)`), to ensure balanced progression.
+*   **Level-Up Rewards:** Each level grants:
+    *   A permanent +7 increase to base `PlayerPower`.
+    *   1 Talent Point.
+    *   A full restoration of `Anima` and other resources.
+
+### 9.3. The Hunter Rank-Up System
+*   **Level Milestones:** Ranks are tied to specific level milestones (e.g., Level 10 for D-Rank, Level 20 for C-Rank).
+*   **The Rank-Up Trial:** Upon reaching a milestone, the player is offered a special **Rank-Up Trial** quest. This is a difficult, solo-only gate designed to test their skill and gear, acting as a gatekeeper for the next tier.
+*   **Rewards of Rank:** Successfully completing the trial promotes the player, granting:
+    *   Access to higher-rank gates and quests.
+    *   The ability to upgrade Workshop buildings to the next tier.
+    *   A new, more prestigious rank insignia on their profile.
+
+---
+
+## 10. The Core Engine: Tying It All Together
+
+### 10.1. Architectural Philosophy
+*   **Concept:** The "engine" is not a single piece of code, but a set of architectural principles that allow our disparate game systems to function as a single, cohesive whole. The engine is built on three pillars: a centralized **Player State**, a robust **Event Bus**, and a **Data-Driven** approach to content.
+
+### 10.2. The Player State: The Single Source of Truth
+*   **The Core Object:** At the heart of the engine is the `PlayerState` object, a comprehensive data model holding all information about a player (level, inventory, active quests, etc.).
+*   **Functionality:** All systems (Quests, Gates, Workshop) read from this central state to ensure consistency when making calculations or checking conditions.
+
+### 10.3. The Event Bus: The Game's Nervous System
+*   **Concept:** An event-driven architecture where systems broadcast messages (e.g., `enemy_defeated`) to a central bus. Other systems can "listen" for these events and trigger their own logic without being directly coupled.
+*   **Benefit:** This creates a highly modular and reactive world. A new system can be added to listen for existing events without requiring any changes to the systems that broadcast them.
+
+### 10.4. Data-Driven Content: The Admin's Power
+*   **Concept:** The engine is content-agnostic. Game logic is designed to read and interpret data (for quests, world events, items, etc.) from a database, rather than having them hard-coded.
+*   **Benefit:** This makes the game infinitely expandable by an admin. Creating new content like a world event or a tactical approach does not require a programmer to write new code, only a new data entry.
+
+### 10.5. The Game Loop: The Heartbeat
+*   **The Daily Reset:** A master script that runs once every 24 hours to generate new Gate Signatures, trigger World Flux events, and reset daily quests.
+*   **The Passive Tick:** A more frequent process (e.g., every 5 minutes) that handles passive resource generation for the Workshop and advances expedition timers.
+

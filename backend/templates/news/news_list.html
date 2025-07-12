@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>Club News & Announcements</h2>
+  {% for article in news_articles %}
+    <article>
+      <h3>{{ article.title }}</h3>
+      <p>by {{ article.author.username }} on {{ article.created_at }}</p>
+      <div>{{ article.content|linebreaks }}</div>
+    </article>
+  {% endfor %}
+{% endblock %}

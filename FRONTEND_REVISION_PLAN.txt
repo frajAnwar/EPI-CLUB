@@ -1,0 +1,82 @@
+# Frontend Revision & Overhaul Plan (v2)
+
+This document outlines the plan for a complete redesign of the frontend application to create a more professional, immersive, and user-centric experience, as per user feedback. We will be starting from scratch.
+
+## 1. Core Principles
+
+- **Immersive UI:** The interface will reflect the project's theme. This includes a dark/light mode theme with glitchy/digital effects and modern design elements.
+- **Integrated Experience:** Features will be logically grouped and accessible from intuitive locations.
+- **Role-Based Views:** The UI will dynamically change based on the user's role (e.g., regular user vs. Admin).
+
+## 2. Navbar & User Profile Dropdown
+
+The main navbar will be streamlined.
+- **Top-Right User Hub:** The top-right corner of the navbar will permanently display the user's profile picture and username.
+- **Profile Dropdown Menu:** Clicking on the User Hub will reveal a dropdown menu:
+    - **View Profile:** Navigates to the user's public profile page.
+    - **Manage Teams:** Navigates to a dedicated team management view.
+    - **Settings:** Navigates to an account settings page.
+    - **Admin Dashboard:** **(Visible only to Admins)** Navigates to the admin control panel.
+    - **Logout:** Logs the user out.
+
+## 3. Main Dashboard
+
+The main page will be a central hub for the user.
+- **Dynamic Grid/Widget Layout:**
+    - **News & Announcements Feed:** A visually appealing, scrollable feed of the latest news articles.
+    - **Upcoming Events & Tournaments:** A widget showing a list of upcoming events and tournaments.
+    - **My Active Quests:** A list of the user's currently active quests.
+    - **Quick Stats:** An overview of the user's level, rank, and currencies.
+
+## 4. Key System Implementations
+
+### Team Management
+- **One Team Per Game:** A user can create or join multiple teams, but is restricted to only one team per game. The backend and frontend will enforce this rule during team creation and invites.
+- **Profile & Tournament Integration:** A user's profile will display all their teams. The Tournaments page will allow users to register a valid team for a tournament and browse other teams.
+
+### Tournament & Bracket System
+- **Backend:** New models will be created to represent a tournament bracket, including `Match`, `Round`, and `Participant` status. Logic will be implemented to automatically generate the first round of a bracket when a tournament starts.
+- **Frontend:** A new `BracketView` component will be created to visually display the tournament bracket. It will show the teams, their matchups for each round, and the scores, updating in real-time as admins input results.
+
+### Dynamic Level & Rank System
+- **Backend Driven:** The frontend will not contain any hardcoded rank names or level thresholds.
+- **API Endpoint:** An API endpoint will provide the rank/level configuration (e.g., Rank names, XP required for each level). The frontend will fetch this data to dynamically display the user's correct rank and progress.
+
+### Notification System (Web & Discord)
+- **On-Site Notifications:** A real-time notification system (using WebSockets) will be implemented. A bell icon in the navbar will indicate unread notifications.
+- **Discord Integration:** A Discord bot will be set up. The backend will trigger this bot to send notifications to users on Discord for critical events (e.g., tournament match starting, team invites, admin approvals). Users will need to link their Discord account in their settings to receive these.
+
+## 5. Admin Dashboard (Frontend)
+
+A new, comprehensive Admin Dashboard will be created, accessible only to users with the `is_admin` flag.
+- **Centralized Management:** A single-page application with tabs for:
+    - **User Management:** Approve registrations, manage roles.
+    - **Content Management:** Create/edit news, events, and quests.
+    - **Tournament Management:** Create tournaments, manage applications, and **input match results to update the bracket**.
+
+## 6. Backend Changes
+
+- **Rename `is_staff` to `is_admin`:** In the `accounts.models.User` model, the `is_staff` field will be renamed to `is_admin`.
+- **New Bracket Models:** Add `Match`, `Round`, etc. models to the `events` app.
+- **Team Logic:** Update team creation/joining logic to enforce the one-team-per-game rule.
+
+## 7. Recommendations for Your Approval
+
+Before we begin, I recommend we incorporate the following ideas to further enhance the platform:
+
+- **Real-Time Chat for Teams:** A private, real-time chat channel for each team, accessible from the team management page. This fosters communication and strategy for tournaments.
+- **Gamified Onboarding Quest:** A short, interactive "orientation quest" for new members that guides them through setting up their profile and exploring the dashboard, rewarding them with XP or a unique beginner badge.
+- **Customizable Profile Banners:** Allow users to unlock or purchase cosmetic profile banners with in-game currency, adding more personalization and value to the economy.
+- **Team-Based Leaderboards:** In addition to individual leaderboards, create leaderboards for teams based on tournament wins or other collective achievements.
+
+## 8. Development Steps
+
+1.  **Approval:** Wait for user approval on this revised plan and the recommendations.
+2.  **Backend Changes:** Implement all backend changes (rename field, add new models, update logic).
+3.  **Frontend Reset:** Remove existing frontend pages and components.
+4.  **Build Core UI:** Implement the new Navbar and Main Dashboard.
+5.  **Build Feature Pages:** Implement the Profile, Team Management, and Tournament/Bracket pages.
+6.  **Build Admin Dashboard:** Implement the frontend for the Admin Dashboard.
+7.  **Integrate Notifications:** Connect the WebSocket and Discord notifications.
+
+This revised plan is more robust and directly incorporates your feedback. Please let me know if this new direction and the recommendations meet your approval.

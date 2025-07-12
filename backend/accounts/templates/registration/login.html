@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login</title>
+    <style>
+        body { background: #181a20; color: #fff; font-family: Arial, sans-serif; }
+        .container { max-width: 400px; margin: 60px auto; background: #23272f; border-radius: 12px; padding: 32px; box-shadow: 0 4px 24px #0002; }
+        h2 { color: #6cf; }
+        label { display: block; margin-top: 16px; color: #aaa; }
+        input { width: 100%; padding: 10px; margin-top: 4px; border-radius: 6px; border: none; background: #181a20; color: #fff; }
+        button { margin-top: 24px; padding: 12px 32px; background: #6cf; color: #181a20; border: none; border-radius: 6px; font-weight: bold; font-size: 16px; cursor: pointer; }
+        .error { color: #ffb347; margin-top: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Login</h2>
+        {% if messages %}
+            {% for message in messages %}
+                <div class="error">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Login</button>
+        </form>
+    </div>
+</body>
+</html>

@@ -1,0 +1,273 @@
+# MASTER PROJECT ROADMAP
+
+**Last Updated:** 2025-07-02
+
+**Core Architecture:** This project is divided into two primary, interconnected systems:
+1.  **The Hunter System:** The core gameplay loop. Focuses on dungeons, player progression (level/rank), and the `GameCoin` economy.
+2.  **The Club System:** The social and competitive layer. Focuses on events, tournaments, teams, and the `ClubCoin` economy.
+
+**System Integration Note:** A full scan of the existing backend (`accounts`, `items`, `quests`, `trading`, `transactions`) has been completed. The current implementation provides a robust foundation. All future development will integrate with these existing systems, requiring no foundational refactoring.
+Adapt, Don't Replace: We will adapt the "Gatekeepers' Legacy" plan to work with the existing generate_floor_plan method and the PlayerDungeonState machine.
+Refactor and Enhance: We will refactor the existing code to integrate our new ideas, such as the World Map, Scouting, Provisions, and Critical Events.
+Focus on UI: The main task will be to build the new user interfaces (World Map, Expedition Log with new features) that will be powered by this robust backend.
+This document tracks the progress and future plans for all systems.
+
+---
+
+## I. Foundational Systems & Project Management
+
+*This section covers project-wide setup, user management, design, and deployment.*
+
+### Core Setup & Planning
+- [x] Project directory and initial files created
+- [x] All planning and requirement documents consolidated into this master roadmap.
+
+### User Management & Authentication
+- [x] Custom `User` model with `level` and `rank` properties implemented.
+- [x] Email & Discord Authentication implemented.
+- [x] Admin approval workflow for new members implemented.
+- [x] User profile creation and editing implemented.
+- [x] Role and permissions management system implemented.
+- [x] Mandatory email verification for registration implemented.
+- [x] Registration application form and admin review implemented.
+- [ ] **TODO:** Customize email verification and admin approval messages.
+
+### Website Design, UI/UX & Deployment
+- [ ] **TODO:** Conduct a comprehensive UI/UX audit and create a unified design system.
+- [ ] **TODO:** Set up the frontend project (React/Vue) and build tools.
+- [ ] **TODO:** Plan and execute the deployment and hosting strategy (PaaS, DB, Storage, CI/CD).
+- [ ] **TODO:** Establish a comprehensive automated and manual testing plan (Unit, Integration, Security).
+
+### Admin Panel & Moderation
+- [x] Admin notifications for new user registration implemented.
+- [ ] **TODO:** Design and implement a unified admin dashboard for managing all website systems.
+- [ ] **TODO:** Implement moderation tools (reporting, banning, review queues, audit logs).
+- [ ] **TODO:** Implement analytics and reporting dashboards for admins.
+
+---
+
+## II. The Hunter System Roadmap
+
+*This section covers the core gameplay loop, focused on dungeons and player progression.*
+
+### Dungeon System ("Gatekeepers' Legacy")
+*This is the primary feature of the Hunter System.*
+
+**Phase 1: Core Backend Foundation (Models & Services)**
+1.  [x] **Data Models (Django)**
+    *   [x] Implement `Dungeon`, `WorldZone`, `PlayerDungeonRun`, `PlayerScoutingData`, `HallOfFame`, `LegacyTrait`, and `UserLegacyTrait` models.
+2.  [ ] **Core Services (Backend)**
+    *   [x] `DungeonGenerationService` (Daily Cron) to create the Gate Manifest on the World Map. 
+        *   Dungeons are influenced by player activity, recent clears, and world events, not just time. Instability is affected by both time and player actions.
+    *   [x] `GateInstabilityService` (Hourly Cron) to manage Anomalies and Dungeon Breaks.
+    *   [X] `ExpeditionService` (Async Task Queue) to manage passive dungeon runs, including the logic for **Critical Events**.
+        *   Add more event variety, including events tied to specific talents or Provisions. Secret events and community voting for Dungeon Breaks.
+
+**Phase 2: API & System Integration**
+1.  [X] **API Endpoint Development**
+    *   [x] Create `/api/hunter/dashboard` endpoint to return the personalized Gate Manifest, respecting rank-gated visibility and scouting data.
+    *   [X] Create `/api/dungeon/<id>/scout` endpoint. This will handle the `GameCoin` transaction for scouting and update the `PlayerScoutingData`.
+        *   Scouting can result in critical successes/failures, adding risk/reward. 
+    *   [X] Create `/api/dungeon/<id>/start-expedition/` endpoint that allows players to commit **Provisions** (consumables) for single-run buffs.
+        *   Provisions can have synergy effects or diminishing returns when stacked.
+    *   [X] Create `/api/dungeon/run/<id>/` endpoint to get the status and log of a run.
+    *   [X] Create `/api/dungeon/run/<id>/respond-event/` endpoint to handle player choices for **Critical Events**.
+
+2.  [x] **Integration with Existing Systems**
+    *   [x] **Items**: Create a new `ItemCategory` for "Provisions" and create several new consumable items for pre-run buffs.
+    *   [x] **Quests**: Add a `quest_category` of "Hunter" to the `Quest` model. The `DungeonGenerationService` will have a chance to attach relevant, randomly selected Hunter Quests to newly generated gates.
+    *   [x] **Shop**: Add "Mana Probes" and "Mana Stabilizers" to the `ShopItem` model, purchasable with `GameCoin`.
+    *   **Marketplace**: Define the `Item` properties for "Fragments of a Black Key." Ensure the `Trade` system can handle these items and facilitate trades using `ClubCoin`.
+        *   Listing fees/taxes to control inflation. Rotating/time-limited shop and marketplace items.
+    *   **Notifications**: Integrate the `Notification` service to send alerts for Red Gates, Dungeon Breaks, and when a player earns a `LegacyTrait` or `HallOfFame` entry. Also, send notifications for **Critical Events**.
+
+**Phase 3: Frontend Development & UX**
+
+1.  [ ] **The Hunter's Watch Dashboard & Expedition Flow**
+    *   [x] Build the main dashboard UI as a dedicated page, separate from the club's social feed.
+    *   [x] Design and implement the Gate Manifest as a grid of interactive cards. Each card should visually represent the gate's state (Normal, Scouted, Anomaly, Red Gate) with clear icons and CSS.
+    *   [x] Implement the scouting UI, showing progressive information reveal and the `GameCoin` cost. 
+        *   [x] Provide real-time feedback for all major actions. Tooltips and help modals for complex mechanics.
+    *   [x] Create the **Provisions UI** that appears before a run starts, allowing players to select consumables.
+    *   [x] Enhance the Expedition Log UI to display pending **Critical Events** and provide choices to the player.
+        *   [x] Real-time feedback for expedition progress and event outcomes.
+
+2.  [X] **Dynamic Event Interfaces**
+    *   [ ] Create a dedicated, full-page UI for **Dungeon Break** events. This should include a community progress bar, a log of recent player actions, and a clear call-to-action for participation.
+    *   [ ] Design a unique, minimalist, and high-tension UI for **Red Gate** encounters to emphasize the danger and the "no escape" rule.
+    *   [ ] `DungeonRewardService` to grant `GameCoin` and loot via atomic transactions. This service will use a **Category-Driven** system, where dungeons are linked to `ItemCategory`s to ensure thematic loot drops. The service will first roll for a rarity tier based on the dungeon's settings, then select a random item from the pool of eligible items in that rarity and category.
+
+
+
+**Phase 4: Endgame & Polish**
+
+1.  [ ] **The Black Key Questline**
+    *   [ ] Implement the logic for "Fragments of a Black Key" to drop from high-rank Anomalies and Red Gates.
+    *   [ ] Create the crafting recipe that combines 10 fragments into a single "Black Key" `Item`.
+    *   [ ] Design and implement the solo dungeon instance for the Black Key, culminating in the reward of the "Echo of the Fallen" `PlayerSkill`.
+        *   Add leaderboards and Hall of Fame for Black Key clears. Mutators/modifiers for increased challenge and rewards.
+
+2.  [ ] **Testing, Balancing & Documentation**
+    *   [ ] Write comprehensive unit and integration tests for all new services and API endpoints.
+    *   [ ] Conduct thorough economic balancing tests in a staging environment to ensure `GameCoin` sinks (scouting) and sources (rewards) are fair and sustainable.
+    *   [ ] Document all new models, API endpoints, and service logic for future development.
+
+### The Constellation of the Hunter (Talent Tree System)
+*This system provides deep, customizable progression for players.*
+
+1.  [ ] **Backend Implementation**
+    *   [ ] **Models:** Create a `Talent` model to define each node in the tree (e.g., `name`, `description`, `branch`, `max_ranks`, `rank_requirement`). Create a `UserTalent` model to link a `User` to a `Talent` and store their invested points.
+    *   **Logic:** Implement the system for awarding **1 Ethereal Shard** (talent point) per player level-up. Create a service to handle the logic of unlocking talents and applying their passive effects to the user's stats and actions (e.g., modifying scouting costs, loot chances, expedition success rates).
+        *   Add cross-branch talents for hybrid builds. Implement a respec system (with a cost) so players can experiment with different builds.
+
+2.  [ ] **API Development**
+    *   [ ] Create a `GET /api/hunter/constellation/` endpoint that returns the entire talent tree structure and the user's current invested points.
+    *   [ ] Create a `POST /api/hunter/constellation/invest/` endpoint to allow players to spend their Ethereal Shards on a specific talent.
+
+3.  [ ] **Frontend Development**
+    *   [ ] **UI/UX:** Design and build the "Constellation" page, featuring a visually appealing, branching tree UI.
+    *   **Interactivity:** Unlocked talents ("lit stars") should be visually distinct. Clicking a node should show its description, cost, and requirements. The UI should clearly display the player's available Ethereal Shards.
+
+4.  [ ] **Integration & Balancing**
+    *   [ ] **Initial Population:** Define and create all the talents for the three branches (Observer, Fortune, Dominator) in the database.
+    *   [ ] **Balancing:** Conduct extensive testing to ensure no single branch is overwhelmingly powerful and that all choices feel viable and impactful.
+
+
+**Automated Expedition Fighting Logic**
+
+*   **Concept:** The outcome of each dungeon floor is determined by a single, server-side calculation that compares player power against floor difficulty.
+*   **Formula:** `SuccessChance = BaseChance + (PowerDifference * PowerModifier) + TalentBonuses - DifficultyPenalty`
+*   **Components:**
+    *   **`BaseChance` (50%):** The starting chance for an evenly matched encounter.
+    *   **`PowerDifference`:** Calculated as `PlayerPower` - `FloorPower`.
+        *   `PlayerPower` is derived from `User.level` and a weighted value from their equipped items.
+        *   `FloorPower` is a static value defined for each floor of a dungeon.
+    *   **`PowerModifier` (2.5%):** The percentage increase/decrease in `SuccessChance` for each point of `PowerDifference`.
+    *   **`TalentBonuses`:** A sum of all relevant passive bonuses from the player's invested talents in the "Constellation of the Hunter" tree.
+    *   **`DifficultyPenalty`:** A penalty applied based on the gate's state (e.g., 0% for Standard, 10% for Anomaly, 20%+ for Red Gates).
+
+### Monster Combat: Player Interaction
+
+- Combat is turn-based, with initiative determined by speed (player vs. monsters).
+- On the player's turn, the player can:
+  - Select an ability or attack (if manual/active combat is enabled).
+  - Use a provision (e.g., healing, buff, escape).
+  - Activate a talent or special skill (if available).
+- If the system is passive/automated, the player’s choices are made before the expedition (provisions, talents, equipment) and during critical events.
+- During a Critical Event, the expedition pauses and the player is prompted to make a choice that can affect the fight (e.g., take a risk for a reward, rescue an NPC, change route).
+- Provisions and talents can trigger automatically or be used in response to certain triggers (e.g., auto-heal on low HP, retry on defeat).
+- After each round, the player receives real-time feedback on combat results, status effects, and loot.
+- If the player is defeated, they may have options to retry (if provision/talent allows) or accept penalties.
+
+**Phase 2: API & Frontend**
+1.  [ ] **API Development**
+    *   [ ] Endpoints for the World Map, scouting, starting expeditions, and checking run status.
+2.  [ ] **Frontend Development**
+    *   [ ] Build the interactive SVG World Map component.
+    *   [ ] Build the real-time Expedition Log UI.
+    *   [ ] Build dedicated UIs for Dungeon Break and Red Gate events.
+
+**Phase 3: Endgame & Polish**
+1.  [ ] **The Black Key Saga**
+    *   [ ] Implement the full questline, from fragment drops to crafting to the final solo instance.
+        *   Add leaderboards and Hall of Fame for Black Key clears. Mutators/modifiers for increased challenge and rewards.
+2.  [ ] **Balancing & Testing**
+    *   [ ] Conduct thorough economic balancing for `GameCoin` sinks and sources.
+    *   [ ] Write and perform comprehensive tests for all dungeon mechanics.
+
+### The Constellation of the Hunter (Talent Tree System)
+*This system provides deep, customizable progression for players.*
+
+1.  [ ] **Backend Implementation**
+    *   [ ] **Models:** Create a `Talent` model to define each node in the tree (e.g., `name`, `description`, `branch`, `max_ranks`, `rank_requirement`). Create a `UserTalent` model to link a `User` to a `Talent` and store their invested points.
+    *   **Logic:** Implement the system for awarding **1 Ethereal Shard** (talent point) per player level-up. Create a service to handle the logic of unlocking talents and applying their passive effects to the user's stats and actions (e.g., modifying scouting costs, loot chances, expedition success rates).
+        *   Add cross-branch talents for hybrid builds. Implement a respec system (with a cost) so players can experiment with different builds.
+
+2.  [ ] **API Development**
+    *   [ ] Create a `GET /api/hunter/constellation/` endpoint that returns the entire talent tree structure and the user's current invested points.
+    *   [ ] Create a `POST /api/hunter/constellation/invest/` endpoint to allow players to spend their Ethereal Shards on a specific talent.
+
+3.  [ ] **Frontend Development**
+    *   [ ] **UI/UX:** Design and build the "Constellation" page, featuring a visually appealing, branching tree UI.
+    *   **Interactivity:** Unlocked talents ("lit stars") should be visually distinct. Clicking a node should show its description, cost, and requirements. The UI should clearly display the player's available Ethereal Shards.
+
+4.  [ ] **Integration & Balancing**
+    *   [ ] **Initial Population:** Define and create all the talents for the three branches (Observer, Fortune, Dominator) in the database.
+    *   [ ] **Balancing:** Conduct extensive testing to ensure no single branch is overwhelmingly powerful and that all choices feel viable and impactful.
+
+---
+
+## III. The Club System Roadmap
+
+*This section covers the social and competitive features exclusive to the club.*
+
+### Calendrier, Events & Tournaments
+*This system is exclusive to the Club and primarily rewards `ClubCoin` and `Badges`.*
+
+1.  [x] Initial Models Created ([DONE])
+2.  [ ] **Unified `Calendrier` Model**
+    *   [ ] Design and implement a single model to handle all scheduled activities (Club Events, Tournaments).
+3.  [ ] **Backend & API**
+    *   [ ] Admin tools for creating and managing all `Calendrier` entries.
+    *   [ ] API endpoints for browsing the calendar, registering for events/tournaments, and viewing results.
+4.  [ ] **Frontend Integration**
+    *   [ ] Build the main `Calendrier` UI (e.g., calendar view, list view).
+    *   [ ] Ensure new events/tournaments are prominently displayed on the main dashboard.
+5.  [ ] **Rewards**
+    *   [ ] Ensure all rewards from these events are distributed as `ClubCoin` or exclusive `Badges` via atomic transactions.
+
+### Teams & Badges
+*This system is exclusive to the Club.*
+
+1.  [x] Initial Models Created ([DONE])
+2.  [ ] **Enhance Team System**
+    *   [ ] Implement team creation, management (invites/kicks), and unique team tags.
+    *   [ ] Integrate team participation with the `Calendrier` for tournaments.
+3.  [ ] **Enhance Badge System**
+    *   [ ] Add categories for badges (e.g., 'Tournament Winner', 'Community Helper').
+    *   [ ] Implement logic for awarding badges automatically from `Calendrier` events and `Achievements`.
+
+---
+
+## IV. Shared Systems Roadmaps
+
+*This section covers systems that bridge the Hunter and Club pillars.*
+
+### Economy, Items & Marketplace
+*This is the primary bridge between the two economies.*
+
+1.  [x] **Core Models & Logic**
+    *   [x] Dual currency (`UserCurrency`) and `Inventory` systems are in place.
+    *   [x] Atomic transaction services are implemented.
+2.  [ ] **Shop Refinement**
+    *   [ ] The `ShopItem` model will be used for the global shop.
+    *   [ ] **Task:** Create two sections in the shop UI: "Hunter Supplies" (for `GameCoin` items like Mana Probes) and "Club Store" (for `ClubCoin` items like cosmetics).
+3.  [ ] **Marketplace / Trading**
+    *   [ ] The `Trade` model will power the player-to-player marketplace.
+    *   [ ] **Task:** The UI must allow players to list items for either `GameCoin` OR `ClubCoin`.
+    *   [ ] **Task:** High-value items from the Hunter System (e.g., "Fragments of a Black Key") will be designated as `ClubCoin`-only trades to drive the premium economy.
+        *   Listing fees/taxes to control inflation. Rotating/time-limited shop and marketplace items.
+4.  [ ] **Future Enhancements**
+    *   [ ] Design and implement a full Auction House system, extending the current trading logic.
+
+### Quests & Achievements
+*This system serves both the Hunter and Club pillars.*
+
+1.  [x] Initial Models Created ([DONE])
+2.  [ ] **Implement Quest Categories**
+    *   [ ] **Task:** Add a `category` field to the `Quest` model with choices: `hunter` and `club`.
+    *   **Hunter Quests:** Generated by the `DungeonGenerationService`. Reward `GameCoin`.
+    *   **Club Quests:** Created by admins for community goals. Reward `ClubCoin` and `Badges`.
+3.  [ ] **Enhance Quest System**
+    *   [ ] Add support for daily quests, repeatable quests, and quest chains/storylines.
+4.  [ ] **Frontend Separation**
+    *   [ ] **Task:** The Hunter's Watch dashboard will have a pane for active "Hunter Quests."
+    *   [ ] **Task:** The main user dashboard will have a "Club Bounty Board" for `club` category quests.
+
+### News & Announcements
+*This system provides information for both pillars.*
+
+1.  [x] Initial Models Created ([DONE])
+2.  [ ] **Implement News Categories**
+    *   [ ] **Task:** Add a `category` field to the `News` and `Announcement` models (e.g., `hunter_system`, `club_event`, `general`).
+    *   **Frontend Filtering:** The UI should allow users to filter news. The Hunter's Watch dashboard will show `hunter_system` news, while the main page shows `club_event` and `general` news.

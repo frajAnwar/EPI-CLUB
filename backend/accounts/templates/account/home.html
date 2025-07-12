@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hunter Campus RPG - Home</title>
+    <style>
+        body { background: #181a20; color: #fff; font-family: Arial, sans-serif; margin: 0; }
+        .navbar { background: #23272f; padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; }
+        .navbar .logo { font-size: 22px; color: #6cf; font-weight: bold; letter-spacing: 1px; }
+        .navbar .profile-link { display: flex; align-items: center; text-decoration: none; color: #fff; }
+        .navbar .profile-pic { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #6cf; object-fit: cover; margin-right: 12px; }
+        .main { display: flex; max-width: 1200px; margin: 32px auto; }
+        .sidebar { width: 260px; background: #23272f; border-radius: 12px; padding: 24px; margin-right: 32px; }
+        .sidebar h3 { color: #ffb347; margin-top: 0; }
+        .quest { margin-bottom: 24px; }
+        .quest-title { font-weight: bold; }
+        .progress-bar-bg { background: #333; border-radius: 8px; height: 16px; width: 100%; margin-top: 6px; }
+        .progress-bar { background: #6cf; height: 16px; border-radius: 8px; }
+        .content { flex: 1; background: #23272f; border-radius: 12px; padding: 32px; }
+        .announcements { margin-bottom: 32px; }
+        .announcement { background: #181a20; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+        .announcement-title { color: #6cf; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="logo">Hunter Campus RPG</div>
+        <a href="/profile/" class="profile-link">
+            {% if user.profile_pic %}
+                <img src="{{ user.profile_pic.url }}" class="profile-pic" alt="Profile Picture">
+            {% else %}
+                <img src="https://ui-avatars.com/api/?name={{ user.username }}" class="profile-pic" alt="Profile Picture">
+            {% endif %}
+            <span>{{ user.get_team_tag }} {{ user.username }}</span>
+        </a>
+    </div>
+    <div class="main">
+        <div class="sidebar">
+            <h3>Activated Quests</h3>
+            {% comment %} Example quests, replace with real data {% endcomment %}
+            <div class="quest">
+                <div class="quest-title">Defeat 5 Bosses</div>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar" style="width: 60%"></div>
+                </div>
+                <div style="font-size:12px; color:#aaa;">3/5 completed</div>
+            </div>
+            <div class="quest">
+                <div class="quest-title">Collect 10 Magic Stones</div>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar" style="width: 30%"></div>
+                </div>
+                <div style="font-size:12px; color:#aaa;">3/10 collected</div>
+            </div>
+        </div>
+        <div class="content">
+            <div class="announcements">
+                <h2>Announcements</h2>
+                {% comment %} Example announcements, replace with real data {% endcomment %}
+                <div class="announcement">
+                    <div class="announcement-title">Welcome to the new RPG platform!</div>
+                    <div>Check out the new dashboard and profile features.</div>
+                </div>
+                <div class="announcement">
+                    <div class="announcement-title">Event: Dungeon Run</div>
+                    <div>Join the dungeon run event this weekend for special rewards!</div>
+                </div>
+            </div>
+            <div>
+                <h2>Welcome, {{ user.username }}!</h2>
+                <p>This is your main hub. Use the navigation bar to access your profile, quests, shop, and more.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

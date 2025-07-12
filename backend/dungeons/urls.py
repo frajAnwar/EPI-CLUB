@@ -1,0 +1,65 @@
+
+from django.urls import path
+from .api import (
+    HunterDashboardView,
+    DungeonScoutingView,
+    DungeonRunView,
+    DungeonBreakActiveView,
+    DungeonBreakParticipateView,
+    RedGateDetailView,
+    UserProvisionsView,
+    GenerateGatesView,
+    CreateStarterDungeonView,
+    RunMigrationsView,
+    ActiveEventsView,
+    EventTriggerView,
+    TalentTreeView,
+    SpendTalentPointView,
+    ShopView,
+    PurchaseItemView,
+    MarketplaceView,
+    PurchaseListingView,
+    WorldZonesView,
+    StartExpeditionView,
+    AdvanceFloorView,
+    DungeonRunStateView,
+    ClaimRewardsView,
+    AdvanceEncounterView,
+    ProceedToNextEncounterView,
+    AbandonExpeditionView,
+)
+
+urlpatterns = [
+    path('api/expedition/claim-rewards/', ClaimRewardsView.as_view(), name='claim_rewards'),
+    path('api/provisions/', UserProvisionsView.as_view(), name='user-provisions'),
+    path('api/dungeon/generate-gates/', GenerateGatesView.as_view(), name='generate-gates'),
+    path('api/dungeon/create-starter-dungeon/', CreateStarterDungeonView.as_view(), name='create-starter-dungeon'),
+    path('api/dungeon/run-migrations/', RunMigrationsView.as_view(), name='run-migrations'),
+    # Only keep roadmap-aligned endpoints
+    path('api/dungeon/<int:dungeon_id>/scout', DungeonScoutingView.as_view(), name='dungeon-scout'),
+    path('api/dungeon/run/<int:dungeon_run_id>/', DungeonRunView.as_view(), name='dungeon-run'),
+    path('api/hunter/dashboard', HunterDashboardView.as_view(), name='hunter-dashboard'),
+    # Dungeon Break Event Endpoints
+    path('api/dungeon-breaks/active/', DungeonBreakActiveView.as_view(), name='dungeon-break-active'),
+    path('api/dungeon-breaks/participate/', DungeonBreakParticipateView.as_view(), name='dungeon-break-participate'),
+    # Red Gate Detail Endpoint
+    path('api/red-gate/<int:gate_id>/', RedGateDetailView.as_view(), name='red-gate-detail'),
+    # WORLD
+    path('api/events/active/', ActiveEventsView.as_view(), name='active-events'),
+    path('api/events/active/<int:zone_id>/', ActiveEventsView.as_view(), name='zone-events'),
+    path('api/events/trigger/', EventTriggerView.as_view(), name='trigger-event'),
+    path('api/hunter/talents/', TalentTreeView.as_view(), name='talent_tree'),
+    path('api/hunter/talents/spend/', SpendTalentPointView.as_view(), name='spend_talent_point'),
+    path('api/shop/', ShopView.as_view(), name='shop'),
+    path('api/shop/purchase/', PurchaseItemView.as_view(), name='purchase_item'),
+    path('api/marketplace/', MarketplaceView.as_view(), name='marketplace'),
+    path('api/marketplace/purchase/', PurchaseListingView.as_view(), name='purchase_listing'),
+    path('api/world-zones/', WorldZonesView.as_view(), name='world_zones'),
+    # Interactive Expedition Endpoints
+    path('api/expedition/start/', StartExpeditionView.as_view(), name='start_expedition'),
+    path('api/expedition/advance/', AdvanceFloorView.as_view(), name='advance_floor'),
+    path('api/expedition/advance-encounter/', AdvanceEncounterView.as_view(), name='advance_encounter'),
+    path('api/expedition/state/<int:run_id>/', DungeonRunStateView.as_view(), name='dungeon_run_state'),
+    path('api/expedition/proceed/', ProceedToNextEncounterView.as_view(), name='proceed_to_next_encounter'),
+    path('api/expedition/abandon/', AbandonExpeditionView.as_view(), name='abandon_expedition'),
+]
